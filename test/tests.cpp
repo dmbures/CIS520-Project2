@@ -34,6 +34,32 @@ class GradeEnvironment : public testing::Environment
         }
 };
 
+TEST(SchedulingTests, FCFS) 
+{
+    dyn_array_t* ready_queue = load_process_control_blocks("PCBs.bin");
+    ScheduleResult_t result;
+
+    ASSERT_TRUE(first_come_first_serve(ready_queue, &result));
+
+    // Perform assertions on result and other checks
+
+    // Cleanup
+    dyn_array_destroy(ready_queue);
+}
+
+TEST(SchedulingTests, SJF) 
+{
+    dyn_array_t* ready_queue = load_process_control_blocks("PCBs.bin");
+    ScheduleResult_t result;
+
+    ASSERT_TRUE(shortest_job_first(ready_queue, &result));
+
+    // Perform assertions on result and other checks
+
+    // Cleanup
+    dyn_array_destroy(ready_queue);
+}
+
 
 int main(int argc, char **argv) 
 {
