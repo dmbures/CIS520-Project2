@@ -34,7 +34,42 @@ class GradeEnvironment : public testing::Environment
         }
 };
 
-TEST(SchedulingTests, FCFS) 
+
+TEST(Case1_PCBNOTNULL, PCB){
+    dyn_array_t* ready_queue = load_process_control_blocks(NULL);
+    ASSERT_FALSE(ready_queue != nullptr);
+
+    ScheduleResult_t result;
+    ASSERT_FALSE(first_come_first_serve(ready_queue, &result));
+
+     dyn_array_destroy(ready_queue);
+}
+
+TEST(Case2_PCBSchedulingTest, PCB){
+    dyn_array_t* ready_queue = load_process_control_blocks("PCBs.bin");
+    ASSERT_TRUE(ready_queue != nullptr);
+
+    ScheduleResult_t result;
+    ASSERT_TRUE(first_come_first_serve(ready_queue, &result));
+
+     dyn_array_destroy(ready_queue);
+}
+
+
+TEST(Case1_ReadyQueueNotNULL, FCFS) 
+{
+    dyn_array_t* ready_queue = NULL;
+    ScheduleResult_t result;
+
+    ASSERT_FALSE(first_come_first_serve(ready_queue, &result));
+
+    // Perform assertions on result and other checks
+
+    // Cleanup
+    dyn_array_destroy(ready_queue);
+}
+
+TEST(Case2_SchedulingTests, FCFS) 
 {
     dyn_array_t* ready_queue = load_process_control_blocks("PCBs.bin");
     ScheduleResult_t result;
@@ -46,6 +81,13 @@ TEST(SchedulingTests, FCFS)
     // Cleanup
     dyn_array_destroy(ready_queue);
 }
+
+
+
+
+
+
+
 
 TEST(SchedulingTests, SJF) 
 {
