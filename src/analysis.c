@@ -1,15 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "dyn_array.h"
-#include "processing_scheduling.h"
+#include "../include/dyn_array.h"
+#include "../include/processing_scheduling.h"
 
 #define FCFS "FCFS"
 #define P "P"
 #define RR "RR"
 #define SJF "SJF"
+#define SRT "SRT"
 
-// Add and comment your analysis code in this function.
 int main(int argc, char **argv) 
 {
     if (argc < 3) 
@@ -22,21 +22,12 @@ int main(int argc, char **argv)
     const char *algorithm = argv[2];
     size_t quantum = 0;
 
-    if (argc == 4) 
-    {
-        quantum = atoi(argv[3]);
-    }
-
     // Load process control blocks from the binary file
+    ScheduleResult_t result = {0, 0, 0};
+    
     dyn_array_t *ready_queue = load_process_control_blocks(pcb_file);
 
-    if (!ready_queue) 
-    {
-        fprintf(stderr, "Error loading process control blocks from %s\n", pcb_file);
-        return EXIT_FAILURE;
-    }
-
-    ScheduleResult_t result;
+    
 
     // Execute the specified scheduling algorithm
     if (strcmp(algorithm, FCFS) == 0) 
@@ -53,6 +44,7 @@ int main(int argc, char **argv)
         else 
         {
             fprintf(stderr, "Error executing FCFS scheduling algorithm\n");
+            EXIT_FAILURE;
         }
     }
     else if (strcmp(algorithm, SJF) == 0) 
@@ -69,6 +61,7 @@ int main(int argc, char **argv)
         else 
         {
             fprintf(stderr, "Error executing Shortest Job First scheduling algorithm\n");
+            EXIT_FAILURE;
         }
     }
     else if (strcmp(algorithm, P) == 0) 
@@ -85,6 +78,7 @@ int main(int argc, char **argv)
         else 
         {
             fprintf(stderr, "Error executing Priority scheduling algorithm\n");
+            EXIT_FAILURE;
         }
     }
     else if (strcmp(algorithm, RR) == 0) 
@@ -101,11 +95,29 @@ int main(int argc, char **argv)
         else 
         {
             fprintf(stderr, "Error executing Round Robin scheduling algorithm\n");
+            EXIT_FAILURE;
+        }
+    }
+    else if (strcmp(algorithm, SRT) == 0) 
+    {
+        if (shortest_remaining_time_first(ready_queue, &result)) 
+        {
+            // Print or store the scheduling results
+            printf("Shortest Remaining Time scheduling results:\n");
+            printf("Average Turnaround Time: %f\n", result.average_turnaround_time);
+            printf("Average Waiting Time: %f\n", result.average_waiting_time);
+            printf("Total Run Time: %lu\n", result.total_run_time);
+        }
+        else 
+        {
+            fprintf(stderr, "Error executing Shortest Remaining Time scheduling algorithm\n");
+            EXIT_FAILURE;
         }
     }
     else 
     {
         fprintf(stderr, "Unknown scheduling algorithm: %s\n", algorithm);
+        EXIT_FAILURE;
     }
 
     // Clean up allocated memory
