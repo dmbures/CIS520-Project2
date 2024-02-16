@@ -10,7 +10,7 @@ extern "C"
 #include <dyn_array.h>
 }
 
-
+/*
 #define NUM_PCB 30
 #define QUANTUM 5 // Used for Robin Round for process as the run time limit
 
@@ -28,17 +28,17 @@ class GradeEnvironment : public testing::Environment
 
         virtual void TearDown()
         {
-            //::testing::Test::RecordProperty("points_given", score);
-            //::testing::Test::RecordProperty("points_total", total);
-            //std::cout << "SCORE: " << score << '/' << total << std::endl;
+            ::testing::Test::RecordProperty("points_given", score);
+            ::testing::Test::RecordProperty("points_total", total);
+            std::cout << "SCORE: " << score << '/' << total << std::endl;
         }
-};
+};*/
 
 
 int main(int argc, char **argv) 
 {
-    ::testing::InitGoogleTest(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(new GradeEnvironment);
+    //::testing::InitGoogleTest(&argc, argv);
+    //::testing::AddGlobalTestEnvironment(new GradeEnvironment);
     return RUN_ALL_TESTS();
 }
 
