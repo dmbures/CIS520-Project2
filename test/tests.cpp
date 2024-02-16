@@ -35,7 +35,7 @@ class GradeEnvironment : public testing::Environment
 };*/
 
 
-int main(int argc, char **argv) 
+int main() 
 {
     //::testing::InitGoogleTest(&argc, argv);
     //::testing::AddGlobalTestEnvironment(new GradeEnvironment);
@@ -76,7 +76,7 @@ TEST(first_come_first_serve, PCBIsValid){
 
     bool test_result = first_come_first_serve(temp_array, &result);
 
-    EXPECT_EQ(true, result);
+    EXPECT_EQ(true, test_result);
     EXPECT_TRUE((float)6.2 == (float)result.average_waiting_time);
     EXPECT_TRUE((float)12.8 ==  (float)result.average_turnaround_time);
     EXPECT_EQ((unsigned long)33, result.total_run_time);
