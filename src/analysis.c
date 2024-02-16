@@ -10,7 +10,7 @@
 #define SJF "SJF"
 #define SRT "SRT"
 
-int analysis_main(int argc, char **argv) 
+int main(int argc, char **argv) 
 {
     if (argc < 3) 
     {
