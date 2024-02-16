@@ -17,8 +17,8 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wshadow -Werror")
 include_directories(include)
 
 # Create library from dyn_array so we can use it later.
-add_library(dyn_array SHARED src/dyn_array.c)
-add_library(process_scheduling SHARED src/process_scheduling.c)
+add_library(dyn_array src/dyn_array.c)
+add_library(process_scheduling src/process_scheduling.c)
 
 # Compile the analysis executable.
 add_executable(analysis src/analysis.c)
@@ -27,7 +27,7 @@ add_executable(analysis src/analysis.c)
 target_link_libraries(analysis dyn_array process_scheduling)
 
 # Compile the the tester executable.
-add_executable(hw2_test test/tests.cpp src/dyn_array.c)
+add_executable(hw2_test test/tests.cpp src/analysis.c)
 
 target_compile_definitions(hw2_test PRIVATE)
 
