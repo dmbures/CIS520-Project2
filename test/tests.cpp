@@ -35,7 +35,7 @@ class GradeEnvironment : public testing::Environment
 };*/
 
 
-int test_main() 
+int main() 
 {
     //::testing::InitGoogleTest(&argc, argv);
     //::testing::AddGlobalTestEnvironment(new GradeEnvironment);

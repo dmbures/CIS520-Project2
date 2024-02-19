@@ -21,7 +21,7 @@ add_executable(analysis src/analysis.c)
 target_link_libraries(analysis dyn_array process_scheduling)
 
 # Compile the tester executable.
-add_executable(hw2_test test/tests.cpp src/analysis.c)
+add_executable(hw2_test test/tests.cpp)
 
 # Link ${PROJECT_NAME}_test with dyn_array, process_scheduling, gtest, and pthread libraries
 target_link_libraries(hw2_test gtest pthread dyn_array process_scheduling)
