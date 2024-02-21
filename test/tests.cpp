@@ -82,6 +82,85 @@ TEST(first_come_first_serve, PCBIsValid){
     EXPECT_EQ((unsigned long)33, result.total_run_time);
 }
 
+
+
+TEST(shortest_job_first, ReadyQueueisNULL){
+    ScheduleResult_t r = {0, 0, 0};
+    dyn_array_t *t = dyn_array_create(32, sizeof(ProcessControlBlock_t), NULL);
+    bool result = false;
+    result = shortest_job_first(t, &r);
+    EXPECT_EQ(false, result);
+}
+
+TEST(shortest_job_first, ScheduleResultisNULL){
+    dyn_array_t *t = dyn_array_create(5, 5, NULL);
+    bool result = false;
+    result = shortest_job_first(t, NULL);
+    EXPECT_EQ(false, result);
+}
+
+//Valid PCB Test
+TEST(shortest_job_first, PCBisValid)
+{
+    dyn_array_t *t = dyn_array_create(32, sizeof(ProcessControlBlock_t), NULL);
+    ScheduleResult_t r = {0, 0, 0};
+    ProcessControlBlock_t pcb1 = {7, 0, 3, false};
+    ProcessControlBlock_t pcb2 = {6, 0, 1, false};
+    ProcessControlBlock_t pcb3 = {3, 0, 4, false};
+    ProcessControlBlock_t pcb4 = {8, 0, 2, false};
+    
+    dyn_array_push_back(t, &pcb1);
+    dyn_array_push_back(t, &pcb2);
+    dyn_array_push_back(t, &pcb3);
+    dyn_array_push_back(t, &pcb4);
+
+    bool result = false;
+    result = shortest_job_first(t, &r);
+
+    EXPECT_EQ(true, result);
+    EXPECT_EQ(7, r.average_waiting_time);
+    EXPECT_EQ(13, r.average_turnaround_time);
+    EXPECT_EQ((unsigned long)24, r.total_run_time);
+}
+
+TEST(round_robin, ReadyQueueisNULL){
+    dyn_array_t *t = dyn_array_create(32, sizeof(ProcessControlBlock_t), NULL);
+    bool result = false;
+    result = round_robin(t, NULL, QUANTUM);
+    EXPECT_EQ(false, result);
+}
+
+TEST(round_robin, ScheduleResultIsNULL){
+    dyn_array_t *t = dyn_array_create(5, sizeof(ProcessControlBlock_t), NULL);
+    bool result = false;
+    result = round_robin(t, NULL, QUANTUM);
+    EXPECT_EQ(false, result);
+}
+
+// Checks to see if the 
+TEST(round_robin, Valid_PCB){
+    dyn_array_t *t = dyn_array_create(4, sizeof(ProcessControlBlock_t), NULL);
+    ScheduleResult_t r = {0, 0, 0};
+    ProcessControlBlock_t pcb0 = {11, 0, 3, false};
+    ProcessControlBlock_t pcb1 = {10, 0, 2, false};
+    ProcessControlBlock_t pcb2 = {5, 0, 1, false};
+    ProcessControlBlock_t pcb3 = {8, 0, 0, false};
+    
+    dyn_array_push_back(t, &pcb0);
+    dyn_array_push_back(t, &pcb1);
+    dyn_array_push_back(t, &pcb2);
+    dyn_array_push_back(t, &pcb3);
+
+    bool result = false;
+    int quantum = 6;
+    result = round_robin(t, &r, quantum);
+
+    EXPECT_EQ(true, result);
+    EXPECT_EQ(14.75, r.average_waiting_time);
+    EXPECT_EQ(23.25, r.average_turnaround_time);
+    EXPECT_EQ((unsigned long)34, r.total_run_time);
+}
+
 //Checks NULL File name error handling
 TEST(load_process_control_blocks, NULL_File_Name){
     dyn_array_t* temp_array = load_process_control_blocks(NULL);
