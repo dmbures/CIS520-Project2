@@ -62,10 +62,11 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
         return false;
     };
 
-    float waittime = 0;
+     float waittime = 0;
     unsigned long runtime = 0;
-    float total_wait_time;
+    float total_wait_time = 0;
     int n = dyn_array_size(ready_queue);
+
     for (int i = 0; i < n; i++) // loop through the ready queue
     {
         total_wait_time += ((ProcessControlBlock_t *)dyn_array_at(ready_queue, i))->arrival;
@@ -106,22 +107,14 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
         return false;
     }; // Sort array by arrival time
 
-    float arrivalTime = 0;
-
-    float waittime = 0;                  // set the wait time
-    unsigned long runtime = 0;           // set the runtime
-    int n = dyn_array_size(ready_queue); // set the size of the ready queue
-
-    unsigned long turnAroundTime = 0;
-    unsigned long waiting = 0;
-
-    float totalTurnAroundTime = 0;
+    float waittime = 0;
+    float total_wait_time = 0;
+    unsigned long runtime = 0;
+    int n = dyn_array_size(ready_queue);
 
 
     for (int i = 0; i < n; i++) // loop through the ready queue
     {
-        arrivalTime += i;
-
         ProcessControlBlock_t *current = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i);
 
         int x = n - i; // set the wait time multiplier
@@ -141,34 +134,23 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
         while (current->remaining_burst_time > 0) // run the process until the burst time is 0
         {
             virtual_cpu(current); // run the process through the virtual CPU
-
             if (current->remaining_burst_time <= 0)
             {
-                turnAroundTime = runtime - current->arrival;
-                waiting = turnAroundTime - totalBurst;
-                totalTurnAroundTime = turnAroundTime;
+                // No need to calculate turnAroundTime and waiting here
+                total_wait_time += runtime - current->arrival;  // Accumulate wait time here
             }
         }
 
     }
 
-    dyn_array_destroy(ready_queue); // cleanup
-
+    dyn_array_destroy(ready_queue);
     float sumExitTime = waittime + runtime;
-
-    turnAroundTime = sumExitTime - arrivalTime;
-
-    totalTurnAroundTime = waittime + runtime;
-
-    result->average_waiting_time = waittime / n;
-    result->average_turnaround_time = totalTurnAroundTime / n;
+    result->average_waiting_time = total_wait_time / n;
+    result->average_turnaround_time = (sumExitTime - total_wait_time) / n;
     result->total_run_time = runtime;
     return true;
-
-
-    return false; 
 }
-
+/*
 bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
     if (ready_queue == NULL || result == NULL) 
@@ -179,7 +161,7 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
     // Implement Priority scheduling logic here
 
     return false;     
-}
+}*/
 
 bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
