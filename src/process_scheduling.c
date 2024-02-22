@@ -117,9 +117,6 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
     float totalTurnAroundTime = 0;
 
-    float exitTime = 0;
-
-    float totalWaitingTime = 0;
 
     for (int i = 0; i < n; i++) // loop through the ready queue
     {
@@ -150,7 +147,6 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
                 turnAroundTime = runtime - current->arrival;
                 waiting = turnAroundTime - totalBurst;
                 totalTurnAroundTime = turnAroundTime;
-                totalWaitingTime = waiting;
             }
         }
 
