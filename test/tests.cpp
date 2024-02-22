@@ -10,10 +10,10 @@ extern "C"
 #include <dyn_array.h>
 }
 
-/*
+
 #define NUM_PCB 30
 #define QUANTUM 5 // Used for Robin Round for process as the run time limit
-
+/*
 unsigned int score;
 unsigned int total;
 

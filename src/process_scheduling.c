@@ -15,6 +15,41 @@ void virtual_cpu(ProcessControlBlock_t *process_control_block)
     --process_control_block->remaining_burst_time;
 }
 
+int cmpfuncArrival(const void *a, const void *b) // compare function for shortest job first
+{
+    if (((ProcessControlBlock_t *)a)->arrival < ((ProcessControlBlock_t *)b)->arrival)
+    {
+        return -1;
+    }
+    else if (((ProcessControlBlock_t *)a)->arrival == ((ProcessControlBlock_t *)b)->arrival)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+int cmpfuncRemainingTime(const void *a, const void *b)
+{
+    return (((ProcessControlBlock_t *)a)->remaining_burst_time - ((ProcessControlBlock_t *)b)->remaining_burst_time); // compare the remaining burst time
+}
+
+int cmpfuncShortest(const void *a, const void *b) // compare function for shortest job first
+{
+    if (((ProcessControlBlock_t *)a)->remaining_burst_time < ((ProcessControlBlock_t *)b)->remaining_burst_time)
+    {
+        return -1;
+    }
+    else if (((ProcessControlBlock_t *)a)->remaining_burst_time == ((ProcessControlBlock_t *)b)->remaining_burst_time)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+
+
 bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
     if (ready_queue == NULL || result == NULL)
@@ -125,7 +160,7 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
     float sumExitTime = waittime + runtime;
 
-    float turnAroundTime = sumExitTime - arrivalTime;
+    turnAroundTime = sumExitTime - arrivalTime;
 
     totalTurnAroundTime = waittime + runtime;
 
@@ -337,35 +372,4 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
     return true; // return true
 }
 
-int cmpfuncArrival(const void *a, const void *b) // compare function for shortest job first
-{
-    if (((ProcessControlBlock_t *)a)->arrival < ((ProcessControlBlock_t *)b)->arrival)
-    {
-        return -1;
-    }
-    else if (((ProcessControlBlock_t *)a)->arrival == ((ProcessControlBlock_t *)b)->arrival)
-    {
-        return 0;
-    }
 
-    return 1;
-}
-
-int cmpfuncRemainingTime(const void *a, const void *b)
-{
-    return (((ProcessControlBlock_t *)a)->remaining_burst_time - ((ProcessControlBlock_t *)b)->remaining_burst_time); // compare the remaining burst time
-}
-
-int cmpfuncShortest(const void *a, const void *b) // compare function for shortest job first
-{
-    if (((ProcessControlBlock_t *)a)->remaining_burst_time < ((ProcessControlBlock_t *)b)->remaining_burst_time)
-    {
-        return -1;
-    }
-    else if (((ProcessControlBlock_t *)a)->remaining_burst_time == ((ProcessControlBlock_t *)b)->remaining_burst_time)
-    {
-        return 0;
-    }
-
-    return 1;
-}
