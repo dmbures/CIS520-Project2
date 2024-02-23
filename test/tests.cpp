@@ -139,7 +139,7 @@ TEST(round_robin, ScheduleResultIsNULL){
 }
 
 // Checks to see if the 
-TEST(round_robin, Valid_PCB){
+TEST(round_robin, PCBisValid){
     dyn_array_t *t = dyn_array_create(4, sizeof(ProcessControlBlock_t), NULL);
     ScheduleResult_t r = {0, 0, 0};
     ProcessControlBlock_t pcb0 = {11, 0, 3, false};

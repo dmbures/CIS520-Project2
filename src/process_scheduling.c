@@ -128,7 +128,7 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
         runtime += current->remaining_burst_time;
         if (i > 0)
         {
-            waittime += ((ProcessControlBlock_t *)dyn_array_at(ready_queue, i - 1))->remaining_burst_time * x; // add the wait time to the waittime
+            waittime += current->remaining_burst_time * (x - 1); // add the wait time to the waittime
         }
     }
 
@@ -142,18 +142,20 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
             virtual_cpu(current); // run the process through the virtual CPU
             if (current->remaining_burst_time <= 0)
             {
-                // No need to calculate turnAroundTime and waiting here
                 total_wait_time += runtime - current->arrival;  // Accumulate wait time here
             }
         }
 
     }
 
-    dyn_array_destroy(ready_queue);
+    
     float sumExitTime = waittime + runtime;
     result->average_waiting_time = total_wait_time / n;
     result->average_turnaround_time = (sumExitTime - total_wait_time) / n;
     result->total_run_time = runtime;
+
+    dyn_array_destroy(ready_queue);
+
     return true;
 }
 /*
@@ -189,7 +191,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
 
     while (!dyn_array_empty(ready_queue)) 
     {
-        for (size_t i = 0; i < dyn_array_size(ready_queue); ++i) 
+        for (size_t i = 0; i < dyn_array_size(ready_queue); ++i)  
         {
             ProcessControlBlock_t *pcb = dyn_array_at(ready_queue, i);
 
@@ -211,6 +213,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
 
                     // Remove the completed process from the ready queue
                     dyn_array_erase(ready_queue, i);
+                    i--;
                 } 
                 else 
                 {
@@ -230,8 +233,9 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
                     dyn_array_erase(ready_queue, i);
                     dyn_array_push_back(ready_queue, pcb);
                 }
-            }
+            } 
         }
+        current_time += quantum;
     }
 
     result->average_waiting_time = (float)total_waiting_time / dyn_array_size(temp_queue);
@@ -272,7 +276,8 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
 
     if (fread(buffer, sizeof(uint32_t), (size_t)(num_PCB[0] * 3), fp) != (num_PCB[0] * 3)) // read the PCBs
     {
-        return false;
+        fclose(fp);
+        return NULL; // return null if there is an error reading from the file
     }
 
     dyn_array_t *PCB_array = dyn_array_create((size_t)num_PCB[0], sizeof(uint32_t), NULL); // create a dynamic array to hold the PCBs
