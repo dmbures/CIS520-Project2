@@ -104,7 +104,9 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     }
 
     if (dyn_array_empty(ready_queue)) {
+
         return false; // Empty ready queue
+        
     }
 
     float waittime = 0;
@@ -160,7 +162,7 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
-    if (ready_queue == NULL || result == NULL) 
+        if (ready_queue == NULL || result == NULL || quantum == 0) 
     {
         return false;
     }
@@ -198,7 +200,6 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
                     total_waiting_time += wait_time;
                     total_turnaround_time += wait_time + remaining_burst;
 
-                    // Remove the completed process from the ready queue
                     dyn_array_erase(ready_queue, i);
                     i--;  // Adjust i to account for the removed element
                 } 
