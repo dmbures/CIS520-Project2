@@ -129,8 +129,6 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     {
         ProcessControlBlock_t *current = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i); // set the current process
 
-        float totalBurst = current->remaining_burst_time;
-
         while (current->remaining_burst_time > 0) // run the process until the burst time is 0
         {
             virtual_cpu(current); // run the process through the virtual CPU
