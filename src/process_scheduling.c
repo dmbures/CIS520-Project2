@@ -102,6 +102,13 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     {
         return false;
     } // Check for invalid param
+
+        
+    if (dyn_array_size(ready_queue) == 0) {
+        return false;
+    } // Check for an empty ready queue
+
+
     if (!dyn_array_sort(ready_queue, cmpfuncShortest))
     {
         return false;
@@ -128,6 +135,7 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     for (int i = 0; i < n; i++) // run the process until the burst time is 0
     {
         ProcessControlBlock_t *current = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i); // set the current process
+
 
         while (current->remaining_burst_time > 0) // run the process until the burst time is 0
         {

@@ -104,15 +104,16 @@ TEST(shortest_job_first, PCBisValid)
 {
     dyn_array_t *t = dyn_array_create(32, sizeof(ProcessControlBlock_t), NULL);
     ScheduleResult_t r = {0, 0, 0};
-    ProcessControlBlock_t pcb1 = {7, 0, 3, false};
-    ProcessControlBlock_t pcb2 = {6, 0, 1, false};
-    ProcessControlBlock_t pcb3 = {3, 0, 4, false};
-    ProcessControlBlock_t pcb4 = {8, 0, 2, false};
-    
+    ProcessControlBlock_t pcb1 = {6, 0, 1, false};
+    ProcessControlBlock_t pcb2 = {8, 0, 2, false};
+    ProcessControlBlock_t pcb3 = {7, 0, 3, false};
+    ProcessControlBlock_t pcb4 = {3, 0, 4, false};
+
     dyn_array_push_back(t, &pcb1);
     dyn_array_push_back(t, &pcb2);
     dyn_array_push_back(t, &pcb3);
     dyn_array_push_back(t, &pcb4);
+
 
     bool result = false;
     result = shortest_job_first(t, &r);
