@@ -98,13 +98,9 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    if (ready_queue == NULL || result == NULL)
+    if (ready_queue == NULL || result == NULL || dyn_array_empty(ready_queue))
     {
         return false;
-    }
-
-    if (dyn_array_empty(ready_queue)) {
-        return false; // Empty ready queue
     }
 
     float total_wait_time = 0;
@@ -133,7 +129,7 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     result->average_turnaround_time = (float)(total_wait_time + total_run_time) / n;
     result->total_run_time = total_run_time;
 
-    dyn_array_destroy(ready_queue); // cleanup
+    dyn_array_destroy(ready_queue);
 
     return true;
 }
@@ -152,7 +148,7 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
-    if (ready_queue == NULL || result == NULL || quantum == 0) 
+if (ready_queue == NULL || result == NULL || quantum == 0 || dyn_array_empty(ready_queue))
     {
         return false;
     }
@@ -163,7 +159,6 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
 
     size_t total_waiting_time = 0;
     size_t total_turnaround_time = 0;
-
     size_t current_time = 0;
 
     while (!dyn_array_empty(ready_queue)) 
@@ -208,6 +203,11 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
                     dyn_array_erase(ready_queue, i);
                     dyn_array_push_back(ready_queue, pcb);
                 }
+            }
+            else 
+            {
+                // If the process has not started, mark it as started
+                pcb->started = true;
             }
         }
 
