@@ -118,11 +118,11 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     {
         ProcessControlBlock_t *current = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i);
 
+        // Calculate wait time for each process
+        total_wait_time += total_run_time - current->arrival;
+
         // Update total run time
         total_run_time += current->remaining_burst_time;
-
-        // Calculate wait time for each process
-        total_wait_time += (total_run_time - current->arrival);
     }
 
     result->average_waiting_time = total_wait_time / n;
@@ -148,7 +148,7 @@ bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
-if (ready_queue == NULL || result == NULL || quantum == 0 || dyn_array_empty(ready_queue))
+   if (ready_queue == NULL || result == NULL || quantum == 0 || dyn_array_empty(ready_queue))
     {
         return false;
     }
@@ -214,9 +214,14 @@ if (ready_queue == NULL || result == NULL || quantum == 0 || dyn_array_empty(rea
         current_time += quantum;
     }
 
-    // Calculate average waiting time and average turnaround time
-    result->average_waiting_time = (float)total_waiting_time / dyn_array_size(ready_queue);
-    result->average_turnaround_time = (float)total_turnaround_time / dyn_array_size(ready_queue);
+    // Check if dyn_array_size(ready_queue) is zero to avoid division by zero
+    size_t queue_size = dyn_array_size(ready_queue);
+    if (queue_size > 0) 
+    {
+        // Calculate average waiting time and average turnaround time
+        result->average_waiting_time = (float)total_waiting_time / queue_size;
+        result->average_turnaround_time = (float)total_turnaround_time / queue_size;
+    }
 
     return true;
 }
