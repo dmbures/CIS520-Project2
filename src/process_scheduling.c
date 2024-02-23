@@ -101,24 +101,16 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     if (ready_queue == NULL || result == NULL)
     {
         return false;
-    } // Check for invalid param
+    }
 
-        
-    if (dyn_array_size(ready_queue) == 0) {
-        return false;
-    } // Check for an empty ready queue
-
-
-    if (!dyn_array_sort(ready_queue, cmpfuncShortest))
-    {
-        return false;
-    }; // Sort array by arrival time
+    if (dyn_array_empty(ready_queue)) {
+        return false; // Empty ready queue
+    }
 
     float waittime = 0;
     float total_wait_time = 0;
     unsigned long runtime = 0;
     int n = dyn_array_size(ready_queue);
-
 
     for (int i = 0; i < n; i++) // loop through the ready queue
     {
@@ -128,7 +120,7 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
         runtime += current->remaining_burst_time;
         if (i > 0)
         {
-            waittime += current->remaining_burst_time * (x - 1); // add the wait time to the waittime
+            waittime += current->remaining_burst_time * (x - 1); // wait time calculation
         }
     }
 
@@ -136,25 +128,20 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
     {
         ProcessControlBlock_t *current = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i); // set the current process
 
-
         while (current->remaining_burst_time > 0) // run the process until the burst time is 0
         {
             virtual_cpu(current); // run the process through the virtual CPU
-            if (current->remaining_burst_time <= 0)
-            {
-                total_wait_time += runtime - current->arrival;  // Accumulate wait time here
-            }
         }
 
+        total_wait_time += runtime - current->arrival; // Accumulate wait time here
     }
 
-    
     float sumExitTime = waittime + runtime;
     result->average_waiting_time = total_wait_time / n;
     result->average_turnaround_time = (sumExitTime - total_wait_time) / n;
     result->total_run_time = runtime;
 
-    dyn_array_destroy(ready_queue);
+    dyn_array_destroy(ready_queue); // cleanup
 
     return true;
 }
@@ -191,7 +178,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
 
     while (!dyn_array_empty(ready_queue)) 
     {
-        for (size_t i = 0; i < dyn_array_size(ready_queue); ++i)  
+        for (size_t i = 0; i < dyn_array_size(ready_queue); ++i) 
         {
             ProcessControlBlock_t *pcb = dyn_array_at(ready_queue, i);
 
@@ -213,7 +200,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
 
                     // Remove the completed process from the ready queue
                     dyn_array_erase(ready_queue, i);
-                    i--;
+                    i--;  // Adjust i to account for the removed element
                 } 
                 else 
                 {
@@ -233,8 +220,9 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
                     dyn_array_erase(ready_queue, i);
                     dyn_array_push_back(ready_queue, pcb);
                 }
-            } 
+            }
         }
+
         current_time += quantum;
     }
 
