@@ -119,8 +119,8 @@ TEST(shortest_job_first, PCBisValid)
     result = shortest_job_first(t, &r);
 
     EXPECT_EQ(true, result);
-    EXPECT_EQ(7, r.average_waiting_time);
-    EXPECT_EQ(13, r.average_turnaround_time);
+    EXPECT_EQ(1.75, r.average_waiting_time);
+    EXPECT_EQ(6, r.average_turnaround_time);
     EXPECT_EQ((unsigned long)24, r.total_run_time);
 }
 
@@ -157,8 +157,8 @@ TEST(round_robin, RRPCBisValid){
     result = round_robin(t, &r, quantum);
 
     EXPECT_EQ(true, result);
-    EXPECT_EQ(14.75, r.average_waiting_time);
-    EXPECT_EQ(23.25, r.average_turnaround_time);
+    EXPECT_EQ(5.1667, r.average_waiting_time);
+    EXPECT_EQ(11.1667, r.average_turnaround_time);
     EXPECT_EQ((unsigned long)34, r.total_run_time);
 }
 

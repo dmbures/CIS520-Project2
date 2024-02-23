@@ -114,6 +114,12 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
     int n = dyn_array_size(ready_queue);
 
+    // Check if the ready queue is empty after sorting
+    if (n == 0)
+    {
+        return false;
+    }
+
     for (int i = 0; i < n; i++) 
     {
         ProcessControlBlock_t *current = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i);
@@ -125,9 +131,13 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
         total_run_time += current->remaining_burst_time;
     }
 
-    result->average_waiting_time = total_wait_time / n;
-    result->average_turnaround_time = (float)(total_wait_time + total_run_time) / n;
-    result->total_run_time = total_run_time;
+    // Check if the result pointer is not NULL before updating
+    if (result != NULL)
+    {
+        result->average_waiting_time = total_wait_time / n;
+        result->average_turnaround_time = (float)(total_wait_time + total_run_time) / n;
+        result->total_run_time = total_run_time;
+    }
 
     dyn_array_destroy(ready_queue);
 
@@ -233,50 +243,51 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
         return NULL;
     }
 
-    FILE *fp = fopen(input_file, "r"); // open the file
-    
-    if (fp == NULL)
+    FILE *fp = fopen(input_file, "rb");  // Open the file in binary mode
+    if (!fp) 
     {
-        return NULL; // return null if the file is not found
-    }
-    
-    uint32_t num_PCB[1];
-    if (fread(num_PCB, sizeof(uint32_t), 1, fp) != 1) // read the number of PCBs
-    {
-        return NULL; // return null if the file is not found
+        return NULL;  // Return null if the file is not found or cannot be opened
     }
 
-    uint32_t buffer[num_PCB[0] * 3];// create a buffer to hold the PCBs
-
-    if (fseek(fp, sizeof(uint32_t), SEEK_SET) != 0) // seek to the beginning of the PCBs
-    {
-        return NULL;
-    }
-
-    if (fread(buffer, sizeof(uint32_t), (size_t)(num_PCB[0] * 3), fp) != (num_PCB[0] * 3)) // read the PCBs
+    uint32_t num_PCB;
+    if (fread(&num_PCB, sizeof(uint32_t), 1, fp) != 1) 
     {
         fclose(fp);
-        return NULL; // return null if there is an error reading from the file
+        return NULL;  // Return null if an error reading the number of PCBs
     }
 
-    dyn_array_t *PCB_array = dyn_array_create((size_t)num_PCB[0], sizeof(uint32_t), NULL); // create a dynamic array to hold the PCBs
-    if (PCB_array == NULL)                                                                 // check if the dynamic array was created
+    ProcessControlBlock_t *buffer = malloc(num_PCB * sizeof(ProcessControlBlock_t));
+    if (!buffer) 
     {
-        return NULL;
+        fclose(fp);
+        return NULL;  // Return null if memory allocation fails
     }
 
-    // Loop through the file creating dynamic array of specified PCBs
-    for (uint32_t i = 0; i < num_PCB[0] * 3; i += 3)
+    if (fread(buffer, sizeof(ProcessControlBlock_t), num_PCB, fp) != num_PCB) 
     {
-        ProcessControlBlock_t *PCB = (ProcessControlBlock_t *)malloc(sizeof(ProcessControlBlock_t)); // create a PCB
-        PCB->remaining_burst_time = buffer[i]; // set the PCB's remaining burst time
-        PCB->priority = buffer[i + 1]; // set the PCB's priority
-        PCB->arrival = buffer[i + 2]; // set the PCB's arrival time
-        PCB->started = false; // set the PCB's started flag to false
-        dyn_array_push_back(PCB_array, PCB); // add the PCB to the dynamic array
+        free(buffer);
+        fclose(fp);
+        return NULL;  // Return null if an error reading PCBs
     }
-    fclose(fp); // close the file
-    return PCB_array; // return the dynamic array
+
+    fclose(fp);
+
+    dyn_array_t *PCB_array = dyn_array_create(num_PCB, sizeof(ProcessControlBlock_t), NULL);
+    if (!PCB_array) 
+    {
+        free(buffer);
+        return NULL;  // Return null if creating dyn_array fails
+    }
+
+    // Copy PCBs from buffer to dynamic array
+    for (uint32_t i = 0; i < num_PCB; i++) 
+    {
+        dyn_array_push_back(PCB_array, &buffer[i]);
+    }
+
+    free(buffer);
+
+    return PCB_array;
 }
 
 bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
