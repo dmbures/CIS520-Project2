@@ -129,6 +129,12 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
         // Update total run time
         total_run_time += current->remaining_burst_time;
+
+        // Run the process until completion
+        while (current->remaining_burst_time > 0) 
+        {
+            virtual_cpu(current);
+        }
     }
 
     // Check if the result pointer is not NULL before updating
@@ -143,22 +149,18 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
     return true;
 }
-/*
-bool priority(dyn_array_t *ready_queue, ScheduleResult_t *result) 
+
+
+bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
-    if (ready_queue == NULL || result == NULL) 
+   // Check for NULL parameters
+    if (ready_queue == NULL || result == NULL || quantum == 0) 
     {
         return false;
     }
 
-    // Implement Priority scheduling logic here
-
-    return false;     
-}*/
-
-bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
-{
-   if (ready_queue == NULL || result == NULL || quantum == 0 || dyn_array_empty(ready_queue))
+    // Check if the ready queue is empty
+    if (dyn_array_empty(ready_queue)) 
     {
         return false;
     }
@@ -238,7 +240,8 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
 
 dyn_array_t *load_process_control_blocks(const char *input_file) 
 {
-    if (!input_file) 
+    // Check for NULL file name
+    if (input_file == NULL) 
     {
         return NULL;
     }
@@ -286,6 +289,13 @@ dyn_array_t *load_process_control_blocks(const char *input_file)
     }
 
     free(buffer);
+
+    // Check if the loaded data matches the expected number of elements
+    if (dyn_array_size(PCB_array) != num_PCB) 
+    {
+        dyn_array_destroy(PCB_array);
+        return NULL;
+    }
 
     return PCB_array;
 }
