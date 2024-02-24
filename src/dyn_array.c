@@ -352,13 +352,10 @@ bool dyn_shift_insert(dyn_array_t *const dyn_array, const size_t position, const
 {
     if (dyn_array && count && mode == MODE_INSERT && data_src) 
     {
-        // may or may not need to increase capacity.
-        // We'll ask the capacity function if we can do it.
-        // If we can, do it. If not... Too bad for the user.
         if (position <= dyn_array->size && dyn_request_size_increase(dyn_array, count)) 
         {
             if (position != dyn_array->size) 
-            {  // wasn't a gap at the end, we need to move data
+            {  
                 memmove(DYN_ARRAY_POSITION(dyn_array, position + count), DYN_ARRAY_POSITION(dyn_array, position),
                         DYN_SIZE_N_ELEMS(dyn_array, dyn_array->size - position));
             }

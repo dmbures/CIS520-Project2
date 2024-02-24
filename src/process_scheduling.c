@@ -48,6 +48,21 @@ int cmpfuncShortest(const void *a, const void *b) // compare function for shorte
     return 1;
 }
 
+// Comparison function for sorting based on remaining burst time
+int compare_remaining_burst_time(const void *a, const void *b) {
+    const ProcessControlBlock_t *pcb_a = (const ProcessControlBlock_t *)a;
+    const ProcessControlBlock_t *pcb_b = (const ProcessControlBlock_t *)b;
+
+    // Compare remaining burst times
+    if (pcb_a->remaining_burst_time < pcb_b->remaining_burst_time) {
+        return -1;
+    } else if (pcb_a->remaining_burst_time > pcb_b->remaining_burst_time) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 
 
 bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result) 
@@ -98,54 +113,41 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    if (ready_queue == NULL || result == NULL || dyn_array_empty(ready_queue))
-    {
+    // Check for NULL inputs
+    if (!ready_queue || !result) {
         return false;
     }
 
-    float total_wait_time = 0;
+    // Check if the ready_queue is empty
+    if (dyn_array_empty(ready_queue)) {
+        return false;
+    }
+
+    // Sort the ready_queue based on remaining burst time (shortest job first)
+    dyn_array_sort(ready_queue, compare_remaining_burst_time);
+
+    // Initialize variables to calculate statistics
+    float total_waiting_time = 0.0;
+    float total_turnaround_time = 0.0;
     unsigned long total_run_time = 0;
 
-    // Sort the ready queue by remaining burst time (shortest job first)
-    if (!dyn_array_sort(ready_queue, cmpfuncRemainingTime))
-    {
-        return false;
+    // Iterate through the processes in the ready_queue
+    for (size_t i = 0; i < dyn_array_size(ready_queue); ++i) {
+        ProcessControlBlock_t *pcb = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i);
+
+        // Calculate waiting time for each process
+        pcb->started = true;  // Mark the process as started
+        total_waiting_time += total_run_time - pcb->arrival;
+
+        // Update total_run_time and total_turnaround_time
+        total_run_time += pcb->remaining_burst_time;
+        total_turnaround_time += total_run_time;
     }
 
-    int n = dyn_array_size(ready_queue);
-
-    // Check if the ready queue is empty after sorting
-    if (n == 0)
-    {
-        return false;
-    }
-
-    for (int i = 0; i < n; i++) 
-    {
-        ProcessControlBlock_t *current = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i);
-
-        // Calculate wait time for each process
-        total_wait_time += total_run_time - current->arrival;
-
-        // Update total run time
-        total_run_time += current->remaining_burst_time;
-
-        // Run the process until completion
-        while (current->remaining_burst_time > 0) 
-        {
-            virtual_cpu(current);
-        }
-    }
-
-    // Check if the result pointer is not NULL before updating
-    if (result != NULL)
-    {
-        result->average_waiting_time = total_wait_time / n;
-        result->average_turnaround_time = (float)(total_wait_time + total_run_time) / n;
-        result->total_run_time = total_run_time;
-    }
-
-    dyn_array_destroy(ready_queue);
+    // Calculate average waiting time and average turnaround time
+    result->average_waiting_time = total_waiting_time / dyn_array_size(ready_queue);
+    result->average_turnaround_time = total_turnaround_time / dyn_array_size(ready_queue);
+    result->total_run_time = total_run_time;
 
     return true;
 }
@@ -153,87 +155,50 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
-   // Check for NULL parameters
-    if (ready_queue == NULL || result == NULL || quantum == 0) 
-    {
+    // Check for NULL inputs
+    if (!ready_queue || !result) {
         return false;
     }
 
-    // Check if the ready queue is empty
-    if (dyn_array_empty(ready_queue)) 
-    {
+    // Check if the ready_queue is empty
+    if (dyn_array_empty(ready_queue)) {
         return false;
     }
 
-    result->average_turnaround_time = 0;
-    result->average_waiting_time = 0;
-    result->total_run_time = 0;
+    // Initialize variables to calculate statistics
+    float total_waiting_time = 0.0;
+    float total_turnaround_time = 0.0;
+    unsigned long total_run_time = 0;
 
-    size_t total_waiting_time = 0;
-    size_t total_turnaround_time = 0;
-    size_t current_time = 0;
+    // Iterate through the processes in the ready_queue
+    for (size_t i = 0; i < dyn_array_size(ready_queue); ++i) {
+        ProcessControlBlock_t *pcb = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i);
 
-    while (!dyn_array_empty(ready_queue)) 
-    {
-        for (size_t i = 0; i < dyn_array_size(ready_queue); ++i) 
-        {
-            ProcessControlBlock_t *pcb = dyn_array_at(ready_queue, i);
-
-            if (pcb->started) 
-            {
-                size_t remaining_burst = pcb->remaining_burst_time;
-
-                if (remaining_burst <= quantum) 
-                {
-                    // Process completes within this quantum
-                    virtual_cpu(pcb);
- 
-                    // Update result and current time
-                    result->total_run_time += remaining_burst;
-                    size_t wait_time = current_time - pcb->arrival;
-                    total_waiting_time += wait_time;
-                    total_turnaround_time += wait_time + remaining_burst;
-
-                    // Remove the completed process from the ready queue
-                    dyn_array_erase(ready_queue, i);
-                    i--;  // Adjust i to account for the removed element
-                } 
-                else 
-                {
-                    // Quantum time slice is not sufficient to complete the process
-                    virtual_cpu(pcb);
-
-                    // Update result and current time
-                    result->total_run_time += quantum;
-                    size_t wait_time = current_time - pcb->arrival;
-                    total_waiting_time += wait_time;
-
-                    // Update the remaining burst time for the process
-                    pcb->remaining_burst_time -= quantum;
-
-                    // Move the process to the end of the queue
-                    dyn_array_erase(ready_queue, i);
-                    dyn_array_push_back(ready_queue, pcb);
-                }
-            }
-            else 
-            {
-                // If the process has not started, mark it as started
-                pcb->started = true;
-            }
+        // Calculate waiting time for each process
+        if (!pcb->started) {
+            total_waiting_time += total_run_time - pcb->arrival;
+            pcb->started = true;  // Mark the process as started
         }
 
-        current_time += quantum;
+        // Update total_run_time and total_turnaround_time
+        unsigned long time_executed = pcb->remaining_burst_time > quantum ? quantum : pcb->remaining_burst_time;
+        total_run_time += time_executed;
+        total_turnaround_time += total_run_time;
+
+        // Update remaining burst time for the process
+        pcb->remaining_burst_time -= time_executed;
+
+        // Check if the process is completed
+        if (pcb->remaining_burst_time == 0) {
+            dyn_array_erase(ready_queue, i);
+            --i;  // Adjust index after erasing
+        }
     }
 
-    // Check if dyn_array_size(ready_queue) is zero to avoid division by zero
-    size_t queue_size = dyn_array_size(ready_queue);
-    if (queue_size > 0) 
-    {
-        // Calculate average waiting time and average turnaround time
-        result->average_waiting_time = (float)total_waiting_time / queue_size;
-        result->average_turnaround_time = (float)total_turnaround_time / queue_size;
-    }
+    // Calculate average waiting time and average turnaround time
+    result->average_waiting_time = total_waiting_time / dyn_array_size(ready_queue);
+    result->average_turnaround_time = total_turnaround_time / dyn_array_size(ready_queue);
+    result->total_run_time = total_run_time;
 
     return true;
 }
