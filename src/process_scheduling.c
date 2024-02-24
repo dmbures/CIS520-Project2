@@ -185,7 +185,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
                 {
                     // Process completes within this quantum
                     virtual_cpu(pcb);
-
+ 
                     // Update result and current time
                     result->total_run_time += remaining_burst;
                     size_t wait_time = current_time - pcb->arrival;
