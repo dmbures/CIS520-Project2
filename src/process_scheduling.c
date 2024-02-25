@@ -119,7 +119,7 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
         total_waiting_time += current_time - pcb->arrival - pcb->remaining_burst_time;
 
         // Remove the completed PCB from the ready queue
-        dyn_array_erase(ready_queue, pcb);
+        dyn_array_erase(ready_queue, 0);
 
         // Update the result values
         result->average_waiting_time = (float)total_waiting_time / dyn_array_size(ready_queue);
