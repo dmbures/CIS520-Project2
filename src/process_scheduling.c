@@ -113,40 +113,51 @@ bool first_come_first_serve(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    // Check for NULL inputs
     if (!ready_queue || !result) {
         return false;
     }
 
-    // Check if the ready_queue is empty
-    if (dyn_array_empty(ready_queue)) {
-        return false;
+    size_t num_processes = dyn_array_size(ready_queue);
+
+    if (num_processes == 0) {
+        return false; // No processes to schedule
     }
 
-    // Sort the ready_queue based on remaining burst time (shortest job first)
+    // Sort the ready queue based on remaining burst time (shortest job first)
     dyn_array_sort(ready_queue, compare_remaining_burst_time);
 
-    // Initialize variables to calculate statistics
-    float total_waiting_time = 0.0;
-    float total_turnaround_time = 0.0;
+    unsigned long total_waiting_time = 0;
+    unsigned long total_turnaround_time = 0;
     unsigned long total_run_time = 0;
 
-    // Iterate through the processes in the ready_queue
-    for (size_t i = 0; i < dyn_array_size(ready_queue); ++i) {
-        ProcessControlBlock_t *pcb = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i);
+    // Initialize the waiting time and turnaround time for the first process
+    ProcessControlBlock_t *pcb = dyn_array_at(ready_queue, 0);
+    pcb->started = true; // Mark the process as started
+    pcb->remaining_burst_time = pcb->remaining_burst_time;
+    total_run_time += pcb->remaining_burst_time;
 
-        // Calculate waiting time for each process
-        pcb->started = true;  // Mark the process as started
-        total_waiting_time += total_run_time - pcb->arrival;
+    // Calculate waiting time, turnaround time, and total run time for subsequent processes
+    for (size_t i = 1; i < num_processes; ++i) {
+        pcb = dyn_array_at(ready_queue, i);
 
-        // Update total_run_time and total_turnaround_time
+        if (!pcb->started) {
+            pcb->started = true; // Mark the process as started
+            pcb->remaining_burst_time = pcb->remaining_burst_time;
+            total_run_time += pcb->remaining_burst_time;
+        }
+
+        pcb->remaining_burst_time = total_run_time;
+        total_waiting_time += pcb->remaining_burst_time;
+
+        pcb->remaining_burst_time = pcb->remaining_burst_time;
+        total_turnaround_time += pcb->remaining_burst_time;
+
         total_run_time += pcb->remaining_burst_time;
-        total_turnaround_time += total_run_time;
     }
 
-    // Calculate average waiting time and average turnaround time
-    result->average_waiting_time = total_waiting_time / dyn_array_size(ready_queue);
-    result->average_turnaround_time = total_turnaround_time / dyn_array_size(ready_queue);
+    // Calculate averages
+    result->average_waiting_time = (float)total_waiting_time / num_processes;
+    result->average_turnaround_time = (float)total_turnaround_time / num_processes;
     result->total_run_time = total_run_time;
 
     return true;
@@ -155,49 +166,40 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
-    // Check for NULL inputs
-    if (!ready_queue || !result) {
+    if (!ready_queue || !result || quantum <= 0) {
         return false;
     }
 
-    // Check if the ready_queue is empty
-    if (dyn_array_empty(ready_queue)) {
-        return false;
+    size_t num_processes = dyn_array_size(ready_queue);
+
+    if (num_processes == 0) {
+        return false; // No processes to schedule
     }
 
-    // Initialize variables to calculate statistics
-    float total_waiting_time = 0.0;
-    float total_turnaround_time = 0.0;
+    unsigned long total_waiting_time = 0;
+    unsigned long total_turnaround_time = 0;
     unsigned long total_run_time = 0;
 
-    // Iterate through the processes in the ready_queue
-    for (size_t i = 0; i < dyn_array_size(ready_queue); ++i) {
-        ProcessControlBlock_t *pcb = (ProcessControlBlock_t *)dyn_array_at(ready_queue, i);
+    // Calculate waiting time, turnaround time, and total run time for each process
+    for (size_t i = 0; i < num_processes; ++i) {
+        ProcessControlBlock_t *pcb = dyn_array_at(ready_queue, i);
 
-        // Calculate waiting time for each process
         if (!pcb->started) {
-            total_waiting_time += total_run_time - pcb->arrival;
-            pcb->started = true;  // Mark the process as started
+            pcb->started = true; // Mark the process as started
+            pcb->remaining_burst_time = fmin(quantum, pcb->remaining_burst_time);
+            total_run_time += pcb->remaining_burst_time;
         }
 
-        // Update total_run_time and total_turnaround_time
-        unsigned long time_executed = pcb->remaining_burst_time > quantum ? quantum : pcb->remaining_burst_time;
-        total_run_time += time_executed;
+        pcb->remaining_burst_time -= quantum;
+        total_waiting_time += total_run_time;
         total_turnaround_time += total_run_time;
 
-        // Update remaining burst time for the process
-        pcb->remaining_burst_time -= time_executed;
-
-        // Check if the process is completed
-        if (pcb->remaining_burst_time == 0) {
-            dyn_array_erase(ready_queue, i);
-            --i;  // Adjust index after erasing
-        }
+        total_run_time += pcb->remaining_burst_time;
     }
 
-    // Calculate average waiting time and average turnaround time
-    result->average_waiting_time = total_waiting_time / dyn_array_size(ready_queue);
-    result->average_turnaround_time = total_turnaround_time / dyn_array_size(ready_queue);
+    // Calculate averages
+    result->average_waiting_time = (float)total_waiting_time / num_processes;
+    result->average_turnaround_time = (float)total_turnaround_time / num_processes;
     result->total_run_time = total_run_time;
 
     return true;
@@ -205,125 +207,95 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
 
 dyn_array_t *load_process_control_blocks(const char *input_file) 
 {
-    // Check for NULL file name
-    if (input_file == NULL) 
+     if (input_file == NULL) // Check for invalid param
+    {
+        return NULL;
+    }
+    FILE *fp;
+    fp = fopen(input_file, "rb"); // open the file
+    if (fp == NULL)
+    {
+        return NULL; // return null if the file is not found
+    }
+    uint32_t num_PCB[1];
+    if (fread(num_PCB, sizeof(uint32_t), 1, fp) != 1) // read the number of PCBs
+    {
+        return NULL; // return null if the file is not found
+    }
+    uint32_t buffer[num_PCB[0] * 3];                // create a buffer to hold the PCBs
+    if (fseek(fp, sizeof(uint32_t), SEEK_SET) != 0) // seek to the beginning of the PCBs
+    {
+        return NULL;
+    }
+    if (fread(buffer, sizeof(uint32_t), (size_t)(num_PCB[0] * 3), fp) != (num_PCB[0] * 3)) // read the PCBs
+    {
+        return false;
+    }
+    dyn_array_t *PCB_array = dyn_array_create((size_t)num_PCB[0], sizeof(uint32_t), NULL); // create a dynamic array to hold the PCBs
+    if (PCB_array == NULL)                                                                 // check if the dynamic array was created
     {
         return NULL;
     }
 
-    FILE *fp = fopen(input_file, "rb");  // Open the file in binary mode
-    if (!fp) 
+    // Loop through the file creating dynamic array of specified PCBs
+    for (uint32_t i = 0; i < num_PCB[0] * 3; i += 3)
     {
-        return NULL;  // Return null if the file is not found or cannot be opened
+        ProcessControlBlock_t *PCB = (ProcessControlBlock_t *)malloc(sizeof(ProcessControlBlock_t)); // create a PCB
+        PCB->remaining_burst_time = buffer[i];                                                       // set the PCB's remaining burst time
+        PCB->priority = buffer[i + 1];                                                               // set the PCB's priority
+        PCB->arrival = buffer[i + 2];                                                                // set the PCB's arrival time
+        PCB->started = false;                                                                        // set the PCB's started flag to false
+        dyn_array_push_back(PCB_array, PCB);                                                         // add the PCB to the dynamic array
     }
-
-    uint32_t num_PCB;
-    if (fread(&num_PCB, sizeof(uint32_t), 1, fp) != 1) 
-    {
-        fclose(fp);
-        return NULL;  // Return null if an error reading the number of PCBs
-    }
-
-    ProcessControlBlock_t *buffer = malloc(num_PCB * sizeof(ProcessControlBlock_t));
-    if (!buffer) 
-    {
-        fclose(fp);
-        return NULL;  // Return null if memory allocation fails
-    }
-
-    if (fread(buffer, sizeof(ProcessControlBlock_t), num_PCB, fp) != num_PCB) 
-    {
-        free(buffer);
-        fclose(fp);
-        return NULL;  // Return null if an error reading PCBs
-    }
-
-    fclose(fp);
-
-    dyn_array_t *PCB_array = dyn_array_create(num_PCB, sizeof(ProcessControlBlock_t), NULL);
-    if (!PCB_array) 
-    {
-        free(buffer);
-        return NULL;  // Return null if creating dyn_array fails
-    }
-
-    // Copy PCBs from buffer to dynamic array
-    for (uint32_t i = 0; i < num_PCB; i++) 
-    {
-        dyn_array_push_back(PCB_array, &buffer[i]);
-    }
-
-    free(buffer);
-
-    // Check if the loaded data matches the expected number of elements
-    if (dyn_array_size(PCB_array) != num_PCB) 
-    {
-        dyn_array_destroy(PCB_array);
-        return NULL;
-    }
-
-    return PCB_array;
+    fclose(fp);       // close the file
+    return PCB_array; // return the dynamic array
 }
+
 
 bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *result) 
 {
-    if (ready_queue == NULL || result == NULL)
-    {
+    // Check for NULL inputs
+    if (!ready_queue || !result) {
         return false;
-    } // Check for invalid param
-    if (!dyn_array_sort(ready_queue, cmpfuncArrival))
-    {
-        return false;
-    }; // Sort array by arrival time
-
-    float total_run_time = 0;       
-    float wait_time = 0; 
-    size_t n = dyn_array_size(ready_queue);
-    size_t current_ready_queue_index = 0;
-    dyn_array_t *run_que = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
-    // Calculate the total run time
-    for (size_t i = 0; i < dyn_array_size(ready_queue); i++) // loop through the ready queue
-    {
-        total_run_time += ((ProcessControlBlock_t *)dyn_array_at(ready_queue, i))->remaining_burst_time; // add the remaining burst time to the total run time
-    }
-    // loop through every unit time
-    for (size_t i = 0; i < (size_t)total_run_time; i++) // loop through the total run time
-    {
-        // Add every element to the run que that has an arrival time less or equal to current time
-        if (dyn_array_size(ready_queue) > current_ready_queue_index)
-        {
-            if (((ProcessControlBlock_t *)dyn_array_at(ready_queue, current_ready_queue_index))->arrival <= (uint32_t)i) // check if the arrival time is less than or equal to the current time
-            {
-                dyn_array_push_back(run_que, dyn_array_at(ready_queue, current_ready_queue_index)); // add the PCB to the run queue
-                current_ready_queue_index++;                                                        // increment the current ready queue index
-            }
-        }
-        // Process any PCBs in the run queue
-        if (dyn_array_size(run_que) != 0)
-        {
-            if (!dyn_array_sort(run_que, cmpfuncRemainingTime))
-            {
-                return false; // sort the run queue by remaining burst time
-            }
-            wait_time += dyn_array_size(run_que) - 1;                                           // add the number of PCBs in the run queue to the wait time
-            virtual_cpu((ProcessControlBlock_t *)dyn_array_at(run_que, 0));                     // run the PCB at the front of the run queue
-            if (((ProcessControlBlock_t *)dyn_array_at(run_que, 0))->remaining_burst_time == 0) // check if the PCB is done
-            {
-                dyn_array_erase(run_que, 0); // remove the PCB from the run queue
-            }
-        }
     }
 
-    // printf("wait time: %f", wait_time / (float)n);
+    // Ensure that ready_queue is not empty
+    if (dyn_array_size(ready_queue) == 0) {
+        return false;
+    }
 
-    result->average_waiting_time = wait_time / n;                       // calculate the average waiting time
-    result->average_turnaround_time = (total_run_time + wait_time) / n; // calculate the average turnaround time
-    result->total_run_time = (unsigned long)total_run_time;             // set the total run time
+    // Sorting the ready_queue based on remaining_burst_time (shortest remaining time first)
+    dyn_array_sort(ready_queue, compare_remaining_burst_time);
 
-    dyn_array_destroy(ready_queue); // cleanup
-    dyn_array_destroy(run_que);
+    unsigned long current_time = 0;
+    float total_waiting_time = 0;
+    float total_turnaround_time = 0;
 
-    return true; // return true
+    for (size_t i = 0; i < dyn_array_size(ready_queue); ++i) {
+        ProcessControlBlock_t *pcb = dyn_array_at(ready_queue, i);
+
+        // Check if the process has arrived
+        if (pcb->arrival > current_time) {
+            current_time = pcb->arrival;
+        }
+
+        // Simulate running the process for its burst time
+        current_time += pcb->remaining_burst_time;
+
+        // Update waiting and turnaround times
+        total_waiting_time += (current_time - pcb->arrival - pcb->remaining_burst_time);
+        total_turnaround_time += (current_time - pcb->arrival);
+
+        // Update remaining burst time
+        pcb->remaining_burst_time = 0;
+    }
+
+    // Calculate averages
+    result->average_waiting_time = total_waiting_time / dyn_array_size(ready_queue);
+    result->average_turnaround_time = total_turnaround_time / dyn_array_size(ready_queue);
+    result->total_run_time = current_time;
+
+    return true;
 }
 
 

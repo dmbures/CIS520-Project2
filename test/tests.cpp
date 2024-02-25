@@ -181,3 +181,50 @@ TEST(load_process_control_blocks, Valid_File)
     dyn_array_t *temp_array = load_process_control_blocks("../pcb.bin");
     EXPECT_EQ((size_t)4, dyn_array_size(temp_array));
 }
+
+
+
+
+TEST(shortest_remaining_time_first, NULL_Ready_Queue)
+{
+    ScheduleResult_t r = {0, 0, 0};
+    dyn_array_t *t = dyn_array_create(32, sizeof(ProcessControlBlock_t), NULL);
+    bool result = false;
+    result = shortest_remaining_time_first(t, &r);
+    EXPECT_EQ(false, result);
+}
+
+TEST(shortest_remaining_time_first, NULL_Schedule_Result)
+{
+    dyn_array_t *t = dyn_array_create(5, sizeof(ProcessControlBlock_t), NULL);
+    bool result = false;
+    result = shortest_remaining_time_first(t, NULL);
+
+    EXPECT_EQ(false, result);
+}
+
+//Valid PCB Test
+TEST(shortest_remaining_time_first, Valid_PCB)
+{
+    dyn_array_t *t = dyn_array_create(4, sizeof(ProcessControlBlock_t), NULL);
+    ScheduleResult_t r = {0, 0, 0};
+    ProcessControlBlock_t pcb1 = {6, 0, 2, false};
+    ProcessControlBlock_t pcb2 = {2, 0, 5, false};
+    ProcessControlBlock_t pcb3 = {8, 0, 1, false};
+    ProcessControlBlock_t pcb4 = {3, 0, 0, false};
+    ProcessControlBlock_t pcb5 = {4, 0, 4, false};
+
+    dyn_array_push_back(t, &pcb1);
+    dyn_array_push_back(t, &pcb2);
+    dyn_array_push_back(t, &pcb3);
+    dyn_array_push_back(t, &pcb4);
+    dyn_array_push_back(t, &pcb5);
+
+    bool result = false;
+    result = shortest_remaining_time_first(t, &r);
+
+    EXPECT_EQ(true, result);
+    EXPECT_EQ((float)4.6, r.average_waiting_time);
+    EXPECT_TRUE((float)9.2 == (float)r.average_turnaround_time);
+    EXPECT_EQ((unsigned long)23, r.total_run_time);
+}
