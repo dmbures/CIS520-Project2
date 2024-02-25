@@ -196,7 +196,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
                     total_turnaround_time += (current_time - pcb->arrival);
 
                     // Remove the completed process
-                    dyn_array_remove(remaining_burst_times, i);
+                    dyn_array_erase(remaining_burst_times, i);
                     --i;  // Adjust index after removal
                 }
             }
