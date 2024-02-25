@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <math.h>
 #include "dyn_array.h"
 #include "processing_scheduling.h"
 
