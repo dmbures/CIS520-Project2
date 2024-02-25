@@ -180,7 +180,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
         }
 
         // Increment the current time by the minimum of quantum and remaining burst time
-        unsigned int time_slice = min(quantum, pcb->remaining_burst_time);
+        unsigned int time_slice = fmin(quantum, pcb->remaining_burst_time);
         current_time += time_slice;
 
         // Update the remaining burst time for the current PCB
