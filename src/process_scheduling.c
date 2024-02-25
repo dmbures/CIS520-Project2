@@ -146,7 +146,7 @@ bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quan
         ProcessControlBlock_t *pcb = dyn_array_front(ready_queue);
 
         // Increment the current time by the minimum of quantum and remaining burst time
-        unsigned int time_slice = min(quantum, pcb->remaining_burst_time);
+        unsigned int time_slice = fmin(quantum, pcb->remaining_burst_time);
         current_time += time_slice;
 
         // Update the remaining burst time for the current PCB
@@ -230,7 +230,7 @@ bool shortest_remaining_time_first(dyn_array_t *ready_queue, ScheduleResult_t *r
         total_waiting_time += current_time - shortest_pcb->arrival - shortest_pcb->remaining_burst_time;
 
         // Remove the completed PCB from the ready queue
-        dyn_array_remove(ready_queue, shortest_pcb);
+        dyn_array_erase(ready_queue, shortest_pcb);
 
         // Update the result values
         result->average_waiting_time = (float)total_waiting_time / dyn_array_size(ready_queue);
