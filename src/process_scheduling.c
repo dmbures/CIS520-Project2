@@ -148,67 +148,63 @@ bool shortest_job_first(dyn_array_t *ready_queue, ScheduleResult_t *result)
 
 bool round_robin(dyn_array_t *ready_queue, ScheduleResult_t *result, size_t quantum) 
 {
-    // Check for NULL inputs
-    if (!ready_queue || !result || quantum <= 0) {
+    if (!ready_queue || !result) {
         return false;
     }
 
-    // Ensure that ready_queue is not empty
-    if (dyn_array_size(ready_queue) == 0) {
+    // Create an array to store the remaining burst times
+    dyn_array_t *remaining_burst_times = dyn_array_create(0, sizeof(unsigned int), NULL);
+
+    // Check if the creation of the array was successful
+    if (!remaining_burst_times) {
         return false;
     }
 
-    unsigned long current_time = 0;
-    float total_waiting_time = 0;
-    float total_turnaround_time = 0;
+    unsigned long current_time = 0;  // Initialize the current time
+    unsigned long total_waiting_time = 0;  // Initialize the total waiting time
 
-    // Keep track of the remaining burst time for each process
-    dyn_array_t *remaining_burst_times = dyn_array_create(dyn_array_capacity(ready_queue), sizeof(unsigned long), NULL);
+    // Process each PCB in the ready queue
+    while (dyn_array_size(ready_queue) > 0) {
+        // Get the PCB at the front of the queue
+        ProcessControlBlock_t *pcb = dyn_array_front(ready_queue);
 
-    for (size_t i = 0; i < dyn_array_size(ready_queue); ++i) {
-        // Initialize remaining burst times
-        unsigned long *remaining_burst_time = dyn_array_push_back(remaining_burst_times, &quantum);
+        // Push the quantum value into the remaining_burst_times array
+        unsigned int quantum_copy = quantum;
+        bool push_result = dyn_array_push_back(remaining_burst_times, &quantum_copy);
 
-        // Set the remaining burst time for each process
-        ProcessControlBlock_t *pcb = dyn_array_at(ready_queue, i);
-        *remaining_burst_time = pcb->remaining_burst_time;
-    }
+        // Check if the push was successful
+        if (!push_result) {
+            // Clean up and return false
+            dyn_array_destroy(remaining_burst_times);
+            return false;
+        }
 
-    // Simulate the round robin scheduling
-    while (dyn_array_size(remaining_burst_times) > 0) {
-        for (size_t i = 0; i < dyn_array_size(remaining_burst_times); ++i) {
-            unsigned long *remaining_burst_time = dyn_array_at(remaining_burst_times, i);
-            ProcessControlBlock_t *pcb = dyn_array_at(ready_queue, i);
+        // Increment the current time by the minimum of quantum and remaining burst time
+        unsigned int time_slice = min(quantum, pcb->remaining_burst_time);
+        current_time += time_slice;
 
-            // Check if the process has arrived
-            if (*remaining_burst_time > 0) {
-                // Simulate running the process for the quantum or the remaining burst time, whichever is smaller
-                unsigned long time_to_run = (*remaining_burst_time < quantum) ? *remaining_burst_time : quantum;
-                current_time += time_to_run;
+        // Update the remaining burst time for the current PCB
+        pcb->remaining_burst_time -= time_slice;
 
-                // Update the remaining burst time
-                *remaining_burst_time -= time_to_run;
+        // If the PCB has completed its execution, calculate waiting time
+        if (pcb->remaining_burst_time == 0) {
+            total_waiting_time += (current_time - pcb->arrival - pcb->remaining_burst_time);
 
-                // Check if the process is done
-                if (*remaining_burst_time == 0) {
-                    // Update waiting and turnaround times
-                    total_waiting_time += (current_time - pcb->arrival - pcb->remaining_burst_time);
-                    total_turnaround_time += (current_time - pcb->arrival);
-
-                    // Remove the completed process
-                    dyn_array_erase(remaining_burst_times, i);
-                    --i;  // Adjust index after removal
-                }
-            }
+            // Remove the completed PCB from the ready queue
+            dyn_array_pop_front(ready_queue);
+        } else {
+            // Move the PCB to the back of the ready queue
+            dyn_array_pop_front(ready_queue);
+            dyn_array_push_back(ready_queue, pcb);
         }
     }
 
-    // Calculate averages
-    result->average_waiting_time = total_waiting_time / dyn_array_size(ready_queue);
-    result->average_turnaround_time = total_turnaround_time / dyn_array_size(ready_queue);
+    // Calculate the average waiting time and turnaround time
+    result->average_waiting_time = (float)total_waiting_time / dyn_array_size(remaining_burst_times);
+    result->average_turnaround_time = result->average_waiting_time + quantum;
     result->total_run_time = current_time;
 
-    // Cleanup
+    // Clean up the remaining_burst_times array
     dyn_array_destroy(remaining_burst_times);
 
     return true;
