@@ -11,7 +11,7 @@ struct dyn_array
     // DYN_FLAGS flags;
     size_t capacity;
     size_t size;
-    const size_t data_size;
+    size_t data_size;
     void *array;
     void (*destructor)(void *);
 };
@@ -61,12 +61,12 @@ dyn_array_t *dyn_array_create(const size_t capacity, const size_t data_type_size
                 actual_capacity <<= 1;
             }
 
-            // dyn_array->capacity = actual_capacity;
-            // dyn_array->size = 0;
-            // dyn_array->data_size = data_type_size;
-            // dyn_array->destructor = destruct_func;
+            dyn_array->capacity = actual_capacity;
+            dyn_array->size = 0;
+            dyn_array->data_size = data_type_size;
+            dyn_array->destructor = destruct_func;
 
-            // dyn_array->array = malloc(data_type_size * actual_capacity);
+            dyn_array->array = malloc(data_type_size * actual_capacity);
 
             // I had an idea... and it compiles
             // const members of a malloc'd struct are so annoying

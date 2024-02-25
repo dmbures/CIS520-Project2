@@ -34,20 +34,6 @@ int cmpfuncRemainingTime(const void *a, const void *b)
     return (((ProcessControlBlock_t *)a)->remaining_burst_time - ((ProcessControlBlock_t *)b)->remaining_burst_time); // compare the remaining burst time
 }
 
-int cmpfuncShortest(const void *a, const void *b) // compare function for shortest job first
-{
-    if (((ProcessControlBlock_t *)a)->remaining_burst_time < ((ProcessControlBlock_t *)b)->remaining_burst_time)
-    {
-        return -1;
-    }
-    else if (((ProcessControlBlock_t *)a)->remaining_burst_time == ((ProcessControlBlock_t *)b)->remaining_burst_time)
-    {
-        return 0;
-    }
-
-    return 1;
-}
-
 // Comparison function for sorting based on remaining burst time
 int compare_remaining_burst_time(const void *a, const void *b) {
     const ProcessControlBlock_t *pcb_a = (const ProcessControlBlock_t *)a;

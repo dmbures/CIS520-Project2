@@ -42,6 +42,8 @@ int main()
     return RUN_ALL_TESTS();
 }
 
+//First Come First Serve Tests
+
 //Checks ScheduleResult is NULL error handling
 TEST(first_come_first_serve, ScheduleResultIsNULL){
     dyn_array *temp_array = dyn_array_create(5, sizeof(ProcessControlBlock_t), NULL);
@@ -83,7 +85,10 @@ TEST(first_come_first_serve, PCBIsValid){
 }
 
 
+//Shortest Job First Tests
 
+
+//Checks ReadyQueue is NULL error handling
 TEST(shortest_job_first, ReadyQueueisNULL){
     ScheduleResult_t r = {0, 0, 0};
     dyn_array_t *t = dyn_array_create(32, sizeof(ProcessControlBlock_t), NULL);
@@ -92,6 +97,7 @@ TEST(shortest_job_first, ReadyQueueisNULL){
     EXPECT_EQ(false, result);
 }
 
+//Checks ScheduleResult is NULL error handling
 TEST(shortest_job_first, ScheduleResultisNULL){
     dyn_array_t *t = dyn_array_create(5, 5, NULL);
     bool result = false;
@@ -124,13 +130,17 @@ TEST(shortest_job_first, PCBisValid)
     EXPECT_EQ((unsigned long)24, r.total_run_time);
 }
 
+//Round Robin Tests
+
+
+//Checks ReadyQueue is NULL error handling
 TEST(round_robin, ReadyQueueisNULL){
     dyn_array_t *t = dyn_array_create(32, sizeof(ProcessControlBlock_t), NULL);
     bool result = false;
     result = round_robin(t, NULL, QUANTUM);
     EXPECT_EQ(false, result);
 }
-
+//Checks ScheduleResult is NULL error handling
 TEST(round_robin, ScheduleResultIsNULL){
     dyn_array_t *t = dyn_array_create(5, sizeof(ProcessControlBlock_t), NULL);
     bool result = false;
@@ -138,7 +148,7 @@ TEST(round_robin, ScheduleResultIsNULL){
     EXPECT_EQ(false, result);
 }
 
-// Checks to see if the 
+//Valid PCB Test
 TEST(round_robin, RRPCBisValid){
     dyn_array_t *t = dyn_array_create(4, sizeof(ProcessControlBlock_t), NULL);
     ScheduleResult_t r = {0, 0, 0};
@@ -162,6 +172,10 @@ TEST(round_robin, RRPCBisValid){
     EXPECT_EQ((unsigned long)34, r.total_run_time);
 }
 
+
+
+//Load Process Control Blocks tests
+
 //Checks NULL File name error handling
 TEST(load_process_control_blocks, NULL_File_Name){
     dyn_array_t* temp_array = load_process_control_blocks(NULL);
@@ -183,8 +197,10 @@ TEST(load_process_control_blocks, Valid_File)
 }
 
 
+//Shortest Remaining Time tests
 
 
+//Checks ReadyQueue is NULL error handling
 TEST(shortest_remaining_time_first, NULL_Ready_Queue)
 {
     ScheduleResult_t r = {0, 0, 0};
@@ -193,7 +209,7 @@ TEST(shortest_remaining_time_first, NULL_Ready_Queue)
     result = shortest_remaining_time_first(t, &r);
     EXPECT_EQ(false, result);
 }
-
+//Checks ScheduleResult is NULL error handling
 TEST(shortest_remaining_time_first, NULL_Schedule_Result)
 {
     dyn_array_t *t = dyn_array_create(5, sizeof(ProcessControlBlock_t), NULL);
